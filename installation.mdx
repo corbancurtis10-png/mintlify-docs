@@ -8,12 +8,345 @@ EZAnim is a single Luau module file — there is no package manager or dependenc
 
 ## Option 1: Roblox Studio (Manual)
 
+If you dont use "Rojo" then add the [Module](https://create.roblox.com/store/asset/133114641753550/EZAnim)  into Roblox Studio:
+
+<Steps>
+  <Step title="Open your game in Roblox Studio">
+    Launch Roblox Studio and open the place file you want to add animations to.
+  </Step>
+  <Step title="Add the Module from your packages">
+    In the Toolbox panel, left-click **My Models** → **My Packages** → **EZAnim**. Add it to **Replicated Storage** or **Server Storage**.
+  </Step>
+  <Step title="Require it from any script">
+    From any `Script` or `LocalScript` in your game:
+
+    ```lua
+    local AnimationService = require(game.ReplicatedStorage.EZAnim)
+    ```
+  </Step>
+</Steps>
+
+## Option 2: Roblox Studio (Source Code)
+
 <Steps>
   <Step title="Open your game in Roblox Studio">
     Launch Roblox Studio and open the place file you want to add animations to.
   </Step>
   <Step title="Create a ModuleScript in ReplicatedStorage">
     In the Explorer panel, right-click **ReplicatedStorage** → **Insert Object** → **ModuleScript**. Rename the new script to `EZAnim`.
+  </Step>
+  <Step title="Copy the Module Source Code">
+    ```lua
+    local AnimationService = {}
+    AnimationService.__index = AnimationService
+    
+    -------------------------------------------
+    -- PriorityMap
+    -------------------------------------------
+    
+    local PriorityMap = {
+    Idle = Enum.AnimationPriority.Idle,
+    Movement = Enum.AnimationPriority.Movement,
+    Action = Enum.AnimationPriority.Action,
+    Action2 = Enum.AnimationPriority.Action2,
+    Action3 = Enum.AnimationPriority.Action3,
+    Action4 = Enum.AnimationPriority.Action4,
+    }
+    
+    ----------------------------------------------------
+    
+    local TweenService = game:GetService("TweenService")
+    
+    ----------------------------------------------------
+    
+    export type Options = {
+    List: {[string]: string}
+    }
+    
+    -------------------------------------------
+    -- Constructor
+    -------------------------------------------
+    
+    function AnimationService.init(Options: Options)
+    return setmetatable({
+    	_AnimationList = Options.List or {},
+    	_Animators = {},
+    	_Tracks = {},
+    	_AnimationCache = {},
+    	_Ragdolls = {},	
+    }, AnimationService)
+    end
+    
+    
+    function AnimationService:_getAnimator(model: Model)
+    if not model then return nil end
+    
+    local humanoid = model:FindFirstChildOfClass("Humanoid")
+    if not humanoid then
+    	warn("AnimationService: No Humanoid in", model.Name)
+    	return nil
+    end
+    
+    local animator = humanoid:FindFirstChildOfClass("Animator")
+    if not animator then
+    	animator = Instance.new("Animator")
+    	animator.Parent = humanoid
+    end
+    
+    self._Animators[model] = animator
+    self._Tracks[model] = self._Tracks[model] or {}
+    self._AnimationCache[model] = self._AnimationCache[model] or {}
+    
+    return animator
+    end
+    
+    -------------------------------------------
+    -- Play Animation
+    -------------------------------------------
+    
+    function AnimationService:play(model: Model, id: string, type: string, looped: boolean?)
+    if not model then
+    	warn("AnimationService: model is nil")
+    	return
+    end
+    
+    if not id then
+    	warn("AnimationService: animation id is nil")
+    	return
+    end
+    
+    local animator = self:_getAnimator(model)
+    if not animator then return end
+    
+    local animId = self._AnimationList[id]
+    if not animId then
+    	warn("AnimationService: animation not found:", id)
+    	return
+    end
+    
+    self._Tracks[model] = self._Tracks[model] or {}
+    self._AnimationCache[model] = self._AnimationCache[model] or {}
+    
+    if not self._AnimationCache[model][id] then
+    	local anim = Instance.new("Animation")
+    	anim.AnimationId = animId
+    	self._AnimationCache[model][id] = anim
+    end
+    
+    if self._Tracks[model][id] then
+    	self._Tracks[model][id]:Stop()
+    	self._Tracks[model][id]:Destroy()
+    end
+    
+    local track = animator:LoadAnimation(self._AnimationCache[model][id])
+    
+    type = string.lower(type or "movement")
+    track.Priority = PriorityMap[type] or Enum.AnimationPriority.Movement
+    
+    track.Looped = looped or false
+    track:Play()
+    
+    self._Tracks[model][id] = track
+    
+    return track
+    end
+    
+    -------------------------------------------
+    -- Stop Animation
+    -------------------------------------------
+    
+    function AnimationService:stop(model: Model, id: string?)
+    if not model then return end
+    if not self._Tracks[model] then return end
+    
+    if id then
+    	local track = self._Tracks[model][id]
+    	if track then
+    		track:Stop()
+    	end
+    else
+    	for _, track in pairs(self._Tracks[model]) do
+    		track:Stop()
+    	end
+    end
+    end
+    
+    -------------------------------------------
+    -- Pause Animation
+    -------------------------------------------
+    
+    function AnimationService:pause(model: Model, id: string)
+    local track = self._Tracks[model] and self._Tracks[model][id]
+    if track then
+    	track:AdjustSpeed(0)
+    end
+    end
+    
+    -------------------------------------------
+    -- Resume Animation
+    -------------------------------------------
+    
+    function AnimationService:resume(model: Model, id: string)
+    local track = self._Tracks[model] and self._Tracks[model][id]
+    if track then
+    	track:AdjustSpeed(1)
+    end
+    end
+    
+    -------------------------------------------
+    -- Get Animation
+    -------------------------------------------
+    
+    function AnimationService:getAnim(model: Model, id: string)
+    return self._Tracks[model] and self._Tracks[model][id]
+    end
+    
+    -------------------------------------------
+    -- Tween
+    -------------------------------------------
+    
+    function AnimationService:tween(instance: Instance, info: TweenInfo, goal: {})
+    local tween = TweenService:Create(instance, info, goal)
+    tween:Play()
+    return tween
+    end
+    
+    -------------------------------------------
+    -- Lerp
+    -------------------------------------------
+    
+    function AnimationService:lerp(instance: Instance, from: Vector3, to : Vector3, alpha : number)
+    if instance:IsA("BasePart") then
+    	instance.Position = from:Lerp(to, alpha)
+    end
+    end
+    
+    -------------------------------------------
+    -- Ragdoll
+    -------------------------------------------
+    
+    function AnimationService:ragdoll(model: Model, duration: number?)
+    if not model then return end
+    
+    local humanoid = model:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+    
+    self._Ragdolls = self._Ragdolls or {}
+    self._Ragdolls[model] = self._Ragdolls[model] or {}
+    
+    humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+    humanoid.PlatformStand = true
+    humanoid.AutoRotate = false
+    
+    for _, motor in ipairs(model:GetDescendants()) do
+    	if motor:IsA("Motor6D") and motor.Part0 and motor.Part1 then
+    		table.insert(self._Ragdolls[model], {
+    			Name = motor.Name,
+    			Part0 = motor.Part0,
+    			Part1 = motor.Part1,
+    			C0 = motor.C0,
+    			C1 = motor.C1
+    		})
+    
+    		local a0 = Instance.new("Attachment")
+    		local a1 = Instance.new("Attachment")
+    
+    		a0.CFrame = motor.C0
+    		a1.CFrame = motor.C1
+    
+    		a0.Parent = motor.Part0
+    		a1.Parent = motor.Part1
+    
+    		local socket = Instance.new("BallSocketConstraint")
+    		socket.Attachment0 = a0
+    		socket.Attachment1 = a1
+    		socket.Parent = motor.Part0
+    
+    		motor.Enabled = false
+    	end
+    end
+    
+    if duration then
+    	task.delay(duration, function()
+    		self:unragdoll(model)
+    	end)
+    end
+    end
+    
+    -------------------------------------------------
+    -- UnRagdoll
+    -------------------------------------------------
+    
+    function AnimationService:unragdoll(model: Model)
+    if not model then return end
+    
+    local humanoid = model:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+    
+    self._Ragdolls = self._Ragdolls or {}
+    local data = self._Ragdolls[model]
+    if not data then return end
+    
+    for _, motorData in ipairs(data) do
+    	local motor = model:FindFirstChild(motorData.Name, true)
+    
+    	if motor and motor:IsA("Motor6D") then
+    		motor.Enabled = true
+    	end
+    end
+    
+    for _, obj in ipairs(model:GetDescendants()) do
+    	if obj:IsA("BallSocketConstraint")
+    		or obj:IsA("Attachment") then
+    		obj:Destroy()
+    	end
+    end
+    
+    humanoid.PlatformStand = false
+    humanoid.AutoRotate = true
+    humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+    
+    self._Ragdolls[model] = nil
+    end
+    
+    ------------------------------------------------------------
+    -- If Animation is Playing
+    ------------------------------------------------------------
+    
+    function AnimationService:isPlaying(model : Model, id : string) : boolean
+    local track = self._Tracks[model] and self._Tracks[model][id]
+    if track then
+    	return track.IsPlaying
+    end
+    end
+    
+    ------------------------------------------------------------
+    -- When Animation hits a event marker
+    ------------------------------------------------------------
+    
+    function AnimationService:onMarker(model : Model, id : string, markerName : string, callback)
+    local track = self:getAnim(model, id)
+    
+    if track then
+    	return track:GetMarkerReachedSignal(markerName):Connect(callback)
+    end
+    end
+    
+    ------------------------------------------------------------
+    -- When Animation Stops
+    ------------------------------------------------------------
+    
+    function AnimationService:onStopped(model : Model, id : string, callback)
+    local track = self:getAnim(model, id)
+    if track then
+    	return track.Stopped:Connect(callback)
+    end
+    end
+    
+    ------------------------------------------------------------
+    
+    return AnimationService
+    ```
   </Step>
   <Step title="Paste in the EZAnim source">
     Open the `EZAnim` ModuleScript, clear its default content, and paste in the full `EZAnim.luau` source code.
@@ -27,7 +360,7 @@ EZAnim is a single Luau module file — there is no package manager or dependenc
   </Step>
 </Steps>
 
-## Option 2: Rojo (File Sync)
+## Option 3: Rojo (File Sync)
 
 If you use [Rojo](https://rojo.space/) to sync a local filesystem into Roblox Studio:
 
@@ -35,7 +368,7 @@ If you use [Rojo](https://rojo.space/) to sync a local filesystem into Roblox St
   <Step title="Place the file in your source directory">
     Copy `EZAnim.luau` into your project's `src/ReplicatedStorage/` folder:
 
-    ```
+    ```text
     my-game/
     └── src/
         └── ReplicatedStorage/
@@ -55,7 +388,7 @@ If you use [Rojo](https://rojo.space/) to sync a local filesystem into Roblox St
 ## Placement Recommendations
 
 | Location | Use case |
-|----------|----------|
+| --- | --- |
 | `ReplicatedStorage` | Shared between server scripts and local scripts (recommended) |
 | `ServerScriptService` | Server-only animation control (NPCs, server-authoritative games) |
 | `StarterPlayerScripts` | Client-only animation control |

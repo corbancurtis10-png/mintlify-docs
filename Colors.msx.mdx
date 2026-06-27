@@ -1,0 +1,26 @@
+import { useEffect, useState } from "react"
+import { codeToHtml } from "shiki"
+
+export function CodeBlock({ children, language = "lua", title }) {
+  const [html, setHtml] = useState("")
+
+  useEffect(() => {
+    async function run() {
+      const result = await codeToHtml(children, {
+        lang: language,
+        theme: "dark-plus"
+      })
+
+      setHtml(result)
+    }
+
+    run()
+  }, [children, language])
+
+  return (
+    <div className="code-block">
+      {title && <div className="code-title">{title}</div>}
+      <div dangerouslySetInnerHTML={{ __html: html }} />
+    </div>
+  )
+}
