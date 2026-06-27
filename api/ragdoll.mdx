@@ -1,0 +1,55 @@
+---
+title: "AnimationService:ragdoll — Enable Physics Ragdoll"
+sidebarTitle: "ragdoll"
+description: "AnimationService:ragdoll(model, duration?) replaces Motor6D joints with BallSocketConstraints to ragdoll a character, with optional auto-recovery."
+---
+
+`ragdoll` converts a character's joint-based rig to a physics-driven ragdoll by replacing every `Motor6D` with a `BallSocketConstraint`. The character collapses and reacts to physics forces. Pass an optional `duration` to automatically recover after that many seconds.
+
+## Signature
+
+```lua
+AnimationService:ragdoll(model: Model, duration: number?)
+```
+
+## Parameters
+
+<ParamField path="model" type="Model" required>
+  The character model to ragdoll. Must contain a `Humanoid` and `Motor6D` joints (standard R6/R15 rigs).
+</ParamField>
+
+<ParamField path="duration" type="number">
+  Optional. Number of seconds before `unragdoll` is automatically called. If omitted, the ragdoll persists until you call `unragdoll` manually.
+</ParamField>
+
+## Returns
+
+None.
+
+## What Happens Internally
+
+1. Humanoid state set to `Physics` (disables Roblox's movement system)
+2. `PlatformStand = true`, `AutoRotate = false`
+3. Each `Motor6D` descendant: attachments created at `C0`/`C1` CFrames, `BallSocketConstraint` wired between them, motor disabled
+4. Joint data saved for `unragdoll` restoration
+5. If `duration` provided: `task.delay(duration, unragdoll)` scheduled
+
+## Examples
+
+```lua
+-- Permanent ragdoll (manual recovery)
+anim:ragdoll(character)
+
+-- Auto-recover after 4 seconds
+anim:ragdoll(character, 4)
+
+-- Ragdoll on death
+humanoid.Died:Connect(function()
+    anim:stop(character)
+    anim:ragdoll(character, 5)
+end)
+```
+
+<Warning>
+  Do not call `ragdoll` on a model that is already ragdolled without calling `unragdoll` first.
+</Warning>

@@ -1,0 +1,60 @@
+---
+title: "AnimationService:onMarker — Listen for Keyframe Markers"
+sidebarTitle: "onMarker"
+description: "AnimationService:onMarker(model, id, markerName, callback) connects a callback to fire each time the animation reaches a named keyframe marker."
+---
+
+`onMarker` connects a callback function to a named keyframe marker in an animation track. The callback fires each time the animation's playhead passes that marker. This is ideal for syncing game logic — like dealing damage or spawning particles — to specific animation frames.
+
+## Signature
+
+```lua
+AnimationService:onMarker(
+    model: Model,
+    id: string,
+    markerName: string,
+    callback: () -> ()
+) -> RBXScriptConnection?
+```
+
+## Parameters
+
+<ParamField path="model" type="Model" required>
+  The model whose animation track to listen on.
+</ParamField>
+
+<ParamField path="id" type="string" required>
+  The animation key. The track must already exist (i.e. `play` must have been called first).
+</ParamField>
+
+<ParamField path="markerName" type="string" required>
+  The exact name of the keyframe marker as set in the Roblox Animation Editor.
+</ParamField>
+
+<ParamField path="callback" type="() -> ()" required>
+  The function to call each time the marker is reached.
+</ParamField>
+
+## Returns
+
+An `RBXScriptConnection` you can call `:Disconnect()` on, or `nil` if no track was found for the model + key.
+
+## Example
+
+```lua
+-- Connect marker before playing
+local conn = anim:onMarker(character, "attack", "HitFrame", function()
+    dealDamage(target, 30)
+end)
+
+anim:play(character, "attack", "Action", false)
+
+-- Disconnect when the character dies
+humanoid.Died:Connect(function()
+    conn:Disconnect()
+end)
+```
+
+<Warning>
+  `onMarker` returns `nil` if no track is stored for the given model and id. Make sure `play` has been called first, or call `onMarker` after playing.
+</Warning>

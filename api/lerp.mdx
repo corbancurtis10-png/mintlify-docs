@@ -1,0 +1,63 @@
+---
+title: "AnimationService:lerp — Lerp a BasePart Position"
+sidebarTitle: "lerp"
+description: "AnimationService:lerp(instance, from, to, alpha) sets a BasePart's position to the Vector3 interpolation between from and to at the given alpha."
+---
+
+`lerp` performs a one-shot `Vector3:Lerp` on a `BasePart`'s position. It sets `instance.Position` to the interpolated point between `from` and `to` at blend factor `alpha`. Drive it each frame inside a loop for smooth motion.
+
+## Signature
+
+```lua
+AnimationService:lerp(
+    instance: Instance,
+    from: Vector3,
+    to: Vector3,
+    alpha: number
+)
+```
+
+## Parameters
+
+<ParamField path="instance" type="Instance" required>
+  The `BasePart` to move. If the instance is not a `BasePart`, the call is silently ignored.
+</ParamField>
+
+<ParamField path="from" type="Vector3" required>
+  The starting position.
+</ParamField>
+
+<ParamField path="to" type="Vector3" required>
+  The target position.
+</ParamField>
+
+<ParamField path="alpha" type="number" required>
+  Blend factor between `0` (at `from`) and `1` (at `to`).
+</ParamField>
+
+## Returns
+
+None.
+
+## Examples
+
+```lua
+-- Instantly place a part 50% between two positions
+anim:lerp(part, Vector3.new(0, 0, 0), Vector3.new(10, 0, 0), 0.5)
+-- part.Position is now Vector3.new(5, 0, 0)
+
+-- Drive with RunService for smooth animation
+local RunService = game:GetService("RunService")
+local start = part.Position
+local goal  = Vector3.new(50, 0, 50)
+local t = 0
+
+RunService.Heartbeat:Connect(function(dt)
+    t = math.clamp(t + dt / 2, 0, 1)  -- 2-second move
+    anim:lerp(part, start, goal, t)
+end)
+```
+
+<Note>
+  `lerp` only modifies `BasePart.Position`. For CFrame-based motion or rotation, use `tween` instead.
+</Note>

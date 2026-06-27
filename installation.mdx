@@ -1,0 +1,80 @@
+---
+title: "Installing EZAnim in Your Roblox Project"
+sidebarTitle: "Installation"
+description: "Step-by-step instructions for adding EZAnim to a Roblox Studio project or a Rojo-based workflow. Covers both manual and file-sync methods."
+---
+
+EZAnim is a single Luau module file — there is no package manager or dependency to install. You just need to place `EZAnim.luau` somewhere accessible in your Roblox game's data model.
+
+## Option 1: Roblox Studio (Manual)
+
+<Steps>
+  <Step title="Open your game in Roblox Studio">
+    Launch Roblox Studio and open the place file you want to add animations to.
+  </Step>
+  <Step title="Create a ModuleScript in ReplicatedStorage">
+    In the Explorer panel, right-click **ReplicatedStorage** → **Insert Object** → **ModuleScript**. Rename the new script to `EZAnim`.
+  </Step>
+  <Step title="Paste in the EZAnim source">
+    Open the `EZAnim` ModuleScript, clear its default content, and paste in the full `EZAnim.luau` source code.
+  </Step>
+  <Step title="Require it from any script">
+    From any `Script` or `LocalScript` in your game:
+
+    ```lua
+    local AnimationService = require(game.ReplicatedStorage.EZAnim)
+    ```
+  </Step>
+</Steps>
+
+## Option 2: Rojo (File Sync)
+
+If you use [Rojo](https://rojo.space/) to sync a local filesystem into Roblox Studio:
+
+<Steps>
+  <Step title="Place the file in your source directory">
+    Copy `EZAnim.luau` into your project's `src/ReplicatedStorage/` folder:
+
+    ```
+    my-game/
+    └── src/
+        └── ReplicatedStorage/
+            └── EZAnim.luau
+    ```
+  </Step>
+  <Step title="Sync with Rojo">
+    Run `rojo serve` and connect from Roblox Studio. EZAnim will appear as a `ModuleScript` under `ReplicatedStorage`.
+  </Step>
+  <Step title="Require it">
+    ```lua
+    local AnimationService = require(game.ReplicatedStorage.EZAnim)
+    ```
+  </Step>
+</Steps>
+
+## Placement Recommendations
+
+| Location | Use case |
+|----------|----------|
+| `ReplicatedStorage` | Shared between server scripts and local scripts (recommended) |
+| `ServerScriptService` | Server-only animation control (NPCs, server-authoritative games) |
+| `StarterPlayerScripts` | Client-only animation control |
+
+<Warning>
+  If you place EZAnim in `ServerScriptService`, client-side `LocalScript`s will not be able to require it. Use `ReplicatedStorage` for shared access.
+</Warning>
+
+## Verifying the Install
+
+Paste this into a `Script` under `ServerScriptService` and run the game in Studio. If no errors appear in the Output window, EZAnim is installed correctly:
+
+```lua
+local AnimationService = require(game.ReplicatedStorage.EZAnim)
+
+local anim = AnimationService.init({
+    List = { test = "rbxassetid://000000000" }
+})
+
+print("EZAnim loaded:", anim)
+-- Expected: EZAnim loaded: table: 0x...
+```

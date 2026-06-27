@@ -1,0 +1,43 @@
+---
+title: "AnimationService:pause — Freeze an Animation in Place"
+sidebarTitle: "pause"
+description: "AnimationService:pause(model, id) freezes an animation at its current frame by setting the track speed to zero without stopping playback."
+---
+
+`pause` freezes a playing animation at its current frame by calling `AdjustSpeed(0)` on the track. The animation remains loaded and at its current time position — call `resume` to continue from the same point.
+
+## Signature
+
+```lua
+AnimationService:pause(model: Model, id: string)
+```
+
+## Parameters
+
+<ParamField path="model" type="Model" required>
+  The model containing the animation track to pause.
+</ParamField>
+
+<ParamField path="id" type="string" required>
+  The animation key to pause.
+</ParamField>
+
+## Returns
+
+None.
+
+## Example
+
+```lua
+-- Play, then pause after 1 second
+anim:play(character, "run", "Movement", true)
+
+task.delay(1, function()
+    anim:pause(character, "run")
+    print("Animation paused")
+end)
+```
+
+<Tip>
+  Pause and resume are useful for cutscenes or slow-motion effects where you need the character to freeze mid-animation rather than restart.
+</Tip>

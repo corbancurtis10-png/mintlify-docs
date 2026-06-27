@@ -1,0 +1,57 @@
+---
+title: "AnimationService.init — Create an EZAnim Instance"
+sidebarTitle: "init"
+description: "AnimationService.init(Options) creates and returns a new EZAnim service object with your animation list. Call this once per animation set."
+---
+
+`AnimationService.init` is the constructor for EZAnim. It takes an `Options` table containing your animation list and returns a new service object with all EZAnim methods available on it.
+
+## Signature
+
+```lua
+AnimationService.init(Options: Options) -> AnimationService
+```
+
+## Parameters
+
+<ParamField path="Options" type="Options" required>
+  Configuration table for the animation service.
+  <Expandable title="Options fields">
+    <ParamField path="Options.List" type="{[string]: string}" required>
+      A dictionary mapping animation name keys to Roblox `rbxassetid://` strings.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Returns
+
+A new `AnimationService` instance with methods: `play`, `stop`, `pause`, `resume`, `getAnim`, `isPlaying`, `tween`, `lerp`, `ragdoll`, `unragdoll`, `onMarker`, `onStopped`.
+
+## Example
+
+```lua
+local AnimationService = require(game.ReplicatedStorage.EZAnim)
+
+local anim = AnimationService.init({
+    List = {
+        idle   = "rbxassetid://111111111",
+        run    = "rbxassetid://222222222",
+        attack = "rbxassetid://333333333",
+        death  = "rbxassetid://444444444",
+    }
+})
+
+print(anim) -- table: 0x...
+```
+
+<Note>
+  You can create multiple `AnimationService` instances with different lists. Each instance manages its own internal track and animator storage.
+</Note>
+
+## Type Definition
+
+```lua
+export type Options = {
+    List: {[string]: string}
+}
+```

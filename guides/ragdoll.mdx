@@ -1,0 +1,76 @@
+---
+title: "Ragdoll Physics with EZAnim"
+sidebarTitle: "Ragdoll"
+description: "Add physics-based ragdoll to any Roblox character using EZAnim's ragdoll and unragdoll methods, with optional automatic recovery after a set duration."
+---
+
+EZAnim includes a built-in ragdoll system that replaces a character's `Motor6D` joints with `BallSocketConstraint` physics joints, causing the character to collapse and react to physics. You can optionally provide a duration after which the character automatically recovers.
+
+## Enabling Ragdoll
+
+Call `ragdoll` with the character model:
+
+```lua
+-- Ragdoll indefinitely
+anim:ragdoll(character)
+
+-- Ragdoll for 3 seconds, then auto-recover
+anim:ragdoll(character, 3)
+```
+
+When called, EZAnim:
+1. Sets the `Humanoid` state to `Physics` (disables default movement)
+2. Sets `PlatformStand = true` and `AutoRotate = false`
+3. Iterates all `Motor6D` descendants, saves their data, replaces each with a `BallSocketConstraint`
+4. If `duration` is provided, schedules `unragdoll` after that many seconds
+
+## Recovering from Ragdoll
+
+Call `unragdoll` to manually restore the character:
+
+```lua
+anim:unragdoll(character)
+```
+
+EZAnim:
+1. Re-enables all stored `Motor6D` joints
+2. Destroys all `BallSocketConstraint` and `Attachment` instances created during ragdoll
+3. Restores `PlatformStand = false` and `AutoRotate = true`
+4. Sets the `Humanoid` state to `GettingUp`
+
+## Ragdoll on Death Example
+
+A common pattern is to ragdoll a character when their `Humanoid` health reaches zero:
+
+```lua
+local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+humanoid.Died:Connect(function()
+    -- Stop all animations first
+    anim:stop(character)
+    -- Ragdoll for 5 seconds
+    anim:ragdoll(character, 5)
+end)
+```
+
+## NPC Ragdoll Example
+
+```lua
+local function knockbackNPC(npcModel)
+    -- Play a hit reaction first
+    anim:play(npcModel, "hit", "Action", false)
+
+    -- After the hit animation, ragdoll
+    anim:onStopped(npcModel, "hit", function()
+        anim:ragdoll(npcModel, 4)
+    end)
+end
+```
+
+<Warning>
+  Do not call `ragdoll` on a model that is already ragdolled. Call `unragdoll` first, or check your game state before calling `ragdoll` again.
+</Warning>
+
+<Note>
+  Ragdoll works on any `Model` that contains `Motor6D` joints and a `Humanoid`. It is designed for R6 and R15 Roblox character rigs.
+</Note>

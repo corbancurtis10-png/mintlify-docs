@@ -1,0 +1,57 @@
+---
+title: "AnimationService:onStopped — React When Animation Ends"
+sidebarTitle: "onStopped"
+description: "AnimationService:onStopped(model, id, callback) connects a callback to the animation track's Stopped signal, firing once when the animation finishes."
+---
+
+`onStopped` connects a callback to the `Stopped` signal of an animation track. The callback fires once when the animation stops — either because it ended naturally, because `stop` was called, or because it was replaced by a new `play` call.
+
+## Signature
+
+```lua
+AnimationService:onStopped(
+    model: Model,
+    id: string,
+    callback: () -> ()
+) -> RBXScriptConnection?
+```
+
+## Parameters
+
+<ParamField path="model" type="Model" required>
+  The model whose animation track to listen on.
+</ParamField>
+
+<ParamField path="id" type="string" required>
+  The animation key. The track must already be stored (via a previous `play` call).
+</ParamField>
+
+<ParamField path="callback" type="() -> ()" required>
+  The function to call when the animation stops.
+</ParamField>
+
+## Returns
+
+An `RBXScriptConnection`, or `nil` if no track was found.
+
+## Examples
+
+```lua
+-- Chain animations
+anim:play(character, "spawn_intro", "Action", false)
+anim:onStopped(character, "spawn_intro", function()
+    anim:play(character, "idle", "Idle", true)
+end)
+
+-- Respawn after death animation
+anim:play(character, "death", "Action", false)
+anim:onStopped(character, "death", function()
+    task.delay(1, function()
+        respawnPlayer(player)
+    end)
+end)
+```
+
+<Note>
+  The `Stopped` signal fires whether the animation ended naturally or was explicitly stopped. If you only want to react to natural completion, check `track.TimePosition` equals `track.Length` inside the callback.
+</Note>

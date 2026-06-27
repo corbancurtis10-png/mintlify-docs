@@ -1,0 +1,65 @@
+---
+title: "AnimationService:play — Play an Animation on a Model"
+sidebarTitle: "play"
+description: "AnimationService:play(model, id, type, looped?) loads and plays an animation by key on a Humanoid model with the specified priority and loop setting."
+---
+
+`play` loads an animation track onto the target model's `Animator` and starts playing it. If the same animation key was already playing on the model, the existing track is stopped and replaced. The method returns the `AnimationTrack` for direct access.
+
+## Signature
+
+```lua
+AnimationService:play(
+    model: Model,
+    id: string,
+    type: string,
+    looped: boolean?
+) -> AnimationTrack?
+```
+
+## Parameters
+
+<ParamField path="model" type="Model" required>
+  The Roblox `Model` to play the animation on. Must contain a `Humanoid` child. If no `Animator` exists under the Humanoid, one is created automatically.
+</ParamField>
+
+<ParamField path="id" type="string" required>
+  The animation key — must match a key in the `List` you passed to `init`. If the key is not found, a warning is printed and the method returns without playing.
+</ParamField>
+
+<ParamField path="type" type="string" required>
+  The animation priority. Case-insensitive. One of:
+  - `"Idle"` — lowest priority
+  - `"Movement"`
+  - `"Action"`
+  - `"Action2"`, `"Action3"`, `"Action4"` — highest priority
+
+  Unknown values default to `Movement`.
+</ParamField>
+
+<ParamField path="looped" type="boolean" default="false">
+  Whether the animation should loop continuously. Defaults to `false` if omitted.
+</ParamField>
+
+## Returns
+
+The `AnimationTrack` that was loaded and played, or `nil` if the model or animation was not found.
+
+## Examples
+
+```lua
+-- One-shot action animation
+anim:play(character, "attack", "Action", false)
+
+-- Looping idle
+anim:play(character, "idle", "Idle", true)
+
+-- Capture the track for direct access
+local track = anim:play(character, "run", "Movement", true)
+print(track.Speed)        -- 1
+print(track.IsPlaying)    -- true
+```
+
+<Warning>
+  If you call `play` with the same `id` while it is already playing, the current track is **stopped and replaced**. Use `isPlaying` to check first if you want to avoid restarting.
+</Warning>

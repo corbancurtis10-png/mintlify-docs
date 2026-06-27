@@ -1,0 +1,40 @@
+---
+title: "AnimationService:isPlaying — Check Animation State"
+sidebarTitle: "isPlaying"
+description: "AnimationService:isPlaying(model, id) returns true if the specified animation is currently playing on the model, or nil if no track is found."
+---
+
+`isPlaying` checks whether a stored animation track is actively playing. It reads the `IsPlaying` property of the stored `AnimationTrack` and returns its value.
+
+## Signature
+
+```lua
+AnimationService:isPlaying(model: Model, id: string) -> boolean?
+```
+
+## Parameters
+
+<ParamField path="model" type="Model" required>
+  The model to check.
+</ParamField>
+
+<ParamField path="id" type="string" required>
+  The animation key to check.
+</ParamField>
+
+## Returns
+
+`true` if the track exists and is actively playing. `nil` if no track is stored for the given model + key combination.
+
+## Example
+
+```lua
+-- Only play attack if it's not already running
+if not anim:isPlaying(character, "attack") then
+    anim:play(character, "attack", "Action", false)
+end
+```
+
+<Note>
+  `isPlaying` returns `nil` (not `false`) when no track exists. Use `not anim:isPlaying(...)` to handle both `nil` and `false`.
+</Note>

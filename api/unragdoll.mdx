@@ -1,0 +1,47 @@
+---
+title: "AnimationService:unragdoll — Recover from Ragdoll"
+sidebarTitle: "unragdoll"
+description: "AnimationService:unragdoll(model) re-enables Motor6D joints, removes physics constraints, and restores normal Humanoid movement after a ragdoll."
+---
+
+`unragdoll` reverses the ragdoll effect: it re-enables all saved `Motor6D` joints, destroys the `BallSocketConstraint` and `Attachment` instances created during `ragdoll`, and puts the `Humanoid` back into the `GettingUp` state.
+
+## Signature
+
+```lua
+AnimationService:unragdoll(model: Model)
+```
+
+## Parameters
+
+<ParamField path="model" type="Model" required>
+  The model to recover from ragdoll. Must be the same model that was previously passed to `ragdoll`.
+</ParamField>
+
+## Returns
+
+None.
+
+## What Happens Internally
+
+1. All stored `Motor6D` joints are re-enabled
+2. All `BallSocketConstraint` and `Attachment` descendants destroyed
+3. `PlatformStand = false`, `AutoRotate = true`
+4. Humanoid state set to `GettingUp`
+5. Ragdoll data cleared for the model
+
+## Example
+
+```lua
+-- Manual recovery
+anim:ragdoll(character)
+
+task.delay(3, function()
+    anim:unragdoll(character)
+    -- Character stands back up
+end)
+```
+
+<Note>
+  If `ragdoll` was called with a `duration`, `unragdoll` is called automatically — you do not need to call it manually in that case.
+</Note>

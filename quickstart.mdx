@@ -1,47 +1,87 @@
 ---
-title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
+title: "Get Started with EZAnim in 5 Minutes"
+sidebarTitle: "Quickstart"
+description: "Learn how to add EZAnim to your Roblox project, initialize the service with your animation list, and play your first animation in under 5 minutes."
 ---
 
-Describe how someone begins using your product. What is the first thing they need to do? Are there any prerequisites?
-
-A quickstart should take someone from zero to using your product. They'll get a quick win and a sense of what they can accomplish.
-
-## Prerequisites
-
-Before you begin, you must have:
-
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
-
-## Get started
+This guide walks you through installing EZAnim, setting up your animation list, and playing your first animation on a character model. By the end you will have a working animation service you can use anywhere in your game.
 
 <Steps>
-  <Step title="Install">
-    Describe how to install your product or sign up.
+  <Step title="Add EZAnim to your project">
+    Place the `EZAnim.luau` module script inside `game.ReplicatedStorage` (or any shared location accessible from both the server and client).
 
-    ```bash
-    npm install your-package
-    ```
+    In Roblox Studio, right-click `ReplicatedStorage` → **Insert Object** → **ModuleScript**, rename it `EZAnim`, then paste in the module source.
+
+    If you use Rojo, add the file to your `src/ReplicatedStorage/` directory and sync.
   </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
 
-    ```bash
-    your-cli init
+  <Step title="Require the module and initialize">
+    In any Script or LocalScript, require EZAnim and call `init` with your animation ID list:
+
+    ```lua Script (ServerScriptService)
+    local AnimationService = require(game.ReplicatedStorage.EZAnim)
+
+    local anim = AnimationService.init({
+        List = {
+            idle   = "rbxassetid://111111111",
+            run    = "rbxassetid://222222222",
+            attack = "rbxassetid://333333333",
+            jump   = "rbxassetid://444444444",
+        }
+    })
     ```
-  </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
 
-    ```bash
-    your-cli start
+    The keys (e.g. `"idle"`, `"run"`) are the names you will use when calling `play`, `stop`, and other methods. The values are Roblox asset IDs for your uploaded animations.
+  </Step>
+
+  <Step title="Play an animation on a character">
+    Call `anim:play(model, id, type, looped)` to start an animation:
+
+    ```lua
+    local Players = game:GetService("Players")
+
+    Players.PlayerAdded:Connect(function(player)
+        player.CharacterAdded:Connect(function(character)
+            -- Play the idle animation, looped
+            anim:play(character, "idle", "Idle", true)
+        end)
+    end)
+    ```
+
+    | Parameter | Type | Description |
+    |-----------|------|-------------|
+    | `model` | `Model` | The character model (must have a `Humanoid`) |
+    | `id` | `string` | Key from your animation `List` |
+    | `type` | `string` | Priority: `"Idle"`, `"Movement"`, `"Action"`, `"Action2"`, `"Action3"`, `"Action4"` |
+    | `looped` | `boolean?` | Whether the animation loops (default `false`) |
+  </Step>
+
+  <Step title="Stop the animation">
+    Call `stop` with the model and animation key to stop a specific track, or omit the key to stop all tracks on the model:
+
+    ```lua
+    -- Stop a specific animation
+    anim:stop(character, "idle")
+
+    -- Stop all animations on the character
+    anim:stop(character)
     ```
   </Step>
 </Steps>
 
-<Tip>
-  Give people a way to get help. This could be a link to a support page, a chat with a customer support agent, or a forum for your product.
+## Next Steps
 
-  Example: Need help? Reach out to us at [support@yourcompany.com](mailto:support@yourcompany.com).
-</Tip>
+<CardGroup cols={2}>
+  <Card title="Core Concepts" icon="lightbulb" href="/concepts/animation-list">
+    Understand animation lists, priorities, and track management.
+  </Card>
+  <Card title="Ragdoll Guide" icon="person-falling" href="/guides/ragdoll">
+    Add physics-based ragdoll to any character with one method call.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/play">
+    Full reference for every EZAnim method.
+  </Card>
+  <Card title="Events Guide" icon="bell" href="/guides/events">
+    React to animation markers and stopped events.
+  </Card>
+</CardGroup>

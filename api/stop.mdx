@@ -1,0 +1,41 @@
+---
+title: "AnimationService:stop — Stop an Animation Track"
+sidebarTitle: "stop"
+description: "AnimationService:stop(model, id?) stops a specific animation by key, or stops all animations on a model when no key is provided."
+---
+
+`stop` halts animation playback on a model. Pass an animation key to stop just that track, or omit the key to stop every animation currently stored for the model.
+
+## Signature
+
+```lua
+AnimationService:stop(model: Model, id: string?)
+```
+
+## Parameters
+
+<ParamField path="model" type="Model" required>
+  The model whose animation(s) to stop.
+</ParamField>
+
+<ParamField path="id" type="string">
+  The animation key to stop. If omitted, all stored tracks on the model are stopped.
+</ParamField>
+
+## Returns
+
+None.
+
+## Examples
+
+```lua
+-- Stop a single animation
+anim:stop(character, "run")
+
+-- Stop all animations on the model
+anim:stop(character)
+```
+
+<Note>
+  Calling `stop` does not remove the track from internal storage. You can call `play` on the same key again without any issues.
+</Note>

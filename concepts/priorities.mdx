@@ -1,0 +1,56 @@
+---
+title: "Animation Priorities in EZAnim"
+sidebarTitle: "Priorities"
+description: "Understand how EZAnim maps priority strings to Roblox AnimationPriority enums, and when to use Idle, Movement, Action, and higher priorities."
+---
+
+When two or more animations play at the same time on a character, Roblox uses the animation's **priority** to determine which one takes precedence. EZAnim maps six priority string values to Roblox's `Enum.AnimationPriority` values so you can set priority directly from the `play` call.
+
+## Priority Levels
+
+| `type` string | Roblox Enum | Typical Use |
+|---------------|-------------|-------------|
+| `"Idle"` | `Enum.AnimationPriority.Idle` | Standing still, breathing cycles |
+| `"Movement"` | `Enum.AnimationPriority.Movement` | Walking, running, swimming |
+| `"Action"` | `Enum.AnimationPriority.Action` | Attacking, interacting, emoting |
+| `"Action2"` | `Enum.AnimationPriority.Action2` | Secondary action layer |
+| `"Action3"` | `Enum.AnimationPriority.Action3` | Tertiary action layer |
+| `"Action4"` | `Enum.AnimationPriority.Action4` | Highest priority action |
+
+Higher priority animations override lower priority ones. `Action4` > `Action3` > `Action2` > `Action` > `Movement` > `Idle`.
+
+## Setting Priority
+
+Pass the priority as the third argument to `play`:
+
+```lua
+-- Low priority: plays when nothing else is active
+anim:play(character, "idle", "Idle", true)
+
+-- Medium priority: overrides idle
+anim:play(character, "run", "Movement", true)
+
+-- High priority: overrides movement and idle
+anim:play(character, "attack", "Action", false)
+```
+
+## Default Priority
+
+If you pass an unrecognized `type` string (or omit it), EZAnim defaults to `Enum.AnimationPriority.Movement`:
+
+```lua
+-- These both default to Movement priority
+anim:play(character, "run")             -- type omitted
+anim:play(character, "run", "unknown")  -- type not in PriorityMap
+```
+
+<Note>
+  Priority strings are **case-insensitive** — EZAnim calls `string.lower()` on the `type` argument before lookup. `"action"`, `"Action"`, and `"ACTION"` all resolve to `Enum.AnimationPriority.Action`.
+</Note>
+
+## Choosing the Right Priority
+
+- Use **Idle** for ambient loops that should yield to everything else.
+- Use **Movement** for locomotion animations (walk, run, swim).
+- Use **Action** for gameplay interactions (attacks, pickups, emotes).
+- Use **Action2–Action4** when you need to layer multiple high-priority animations simultaneously (e.g. a torso rotation on top of an attack).

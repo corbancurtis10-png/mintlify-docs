@@ -1,0 +1,43 @@
+---
+title: "AnimationService:getAnim — Retrieve a Stored Track"
+sidebarTitle: "getAnim"
+description: "AnimationService:getAnim(model, id) returns the stored AnimationTrack for a model and animation key, giving direct access to track properties and events."
+---
+
+`getAnim` retrieves the `AnimationTrack` stored internally for a given model and animation key. Use this when you need direct access to track properties, signals, or methods that EZAnim does not wrap.
+
+## Signature
+
+```lua
+AnimationService:getAnim(model: Model, id: string) -> AnimationTrack?
+```
+
+## Parameters
+
+<ParamField path="model" type="Model" required>
+  The model to look up.
+</ParamField>
+
+<ParamField path="id" type="string" required>
+  The animation key to retrieve the track for.
+</ParamField>
+
+## Returns
+
+The `AnimationTrack` if it exists, or `nil` if no track has been stored for the given model + key.
+
+## Example
+
+```lua
+anim:play(character, "run", "Movement", true)
+
+local track = anim:getAnim(character, "run")
+if track then
+    print("Speed:", track.Speed)
+    print("Time position:", track.TimePosition)
+    print("Is looped:", track.Looped)
+
+    -- Manually adjust speed for slow-motion
+    track:AdjustSpeed(0.5)
+end
+```

@@ -1,0 +1,110 @@
+---
+title: "Playing and Controlling Animations with EZAnim"
+sidebarTitle: "Playing Animations"
+description: "Learn how to play, stop, pause, and resume character animations in Roblox using EZAnim's playback methods with priority and loop control."
+---
+
+EZAnim gives you full playback control over character animations through four core methods: `play`, `stop`, `pause`, and `resume`. This guide covers each one with practical examples.
+
+## Playing an Animation
+
+Call `play` with the target model, the animation key, the priority type, and whether to loop:
+
+```lua
+local anim = AnimationService.init({
+    List = {
+        idle   = "rbxassetid://111111111",
+        run    = "rbxassetid://222222222",
+        attack = "rbxassetid://333333333",
+    }
+})
+
+-- Loop the idle animation at Idle priority
+anim:play(character, "idle", "Idle", true)
+
+-- Play a one-shot attack at Action priority
+anim:play(character, "attack", "Action", false)
+```
+
+`play` returns the `AnimationTrack` if you need direct access:
+
+```lua
+local track = anim:play(character, "run", "Movement", true)
+print(track.Speed) -- 1
+```
+
+## Stopping Animations
+
+Stop a specific animation by key:
+
+```lua
+anim:stop(character, "idle")
+```
+
+Stop **all** animations on a model by omitting the key:
+
+```lua
+anim:stop(character)
+```
+
+<Note>
+  `stop` calls the track's `:Stop()` method but keeps the track stored internally. The animation blends out according to its default fade-out time.
+</Note>
+
+## Pausing and Resuming
+
+`pause` freezes the animation at its current frame by setting the track speed to `0`:
+
+```lua
+anim:pause(character, "run")
+```
+
+`resume` restores playback at normal speed:
+
+```lua
+anim:resume(character, "run")
+```
+
+<Tip>
+  Use pause/resume for slow-motion effects or cutscene moments where you want the animation to freeze in place rather than restart from the beginning.
+</Tip>
+
+## Checking If an Animation Is Playing
+
+Use `isPlaying` to guard logic behind an active animation:
+
+```lua
+if not anim:isPlaying(character, "attack") then
+    anim:play(character, "attack", "Action", false)
+end
+```
+
+## Full Playback Example
+
+A complete pattern for a character that transitions between idle and run:
+
+```lua
+local RunService = game:GetService("RunService")
+local character = player.Character
+local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+local anim = AnimationService.init({
+    List = {
+        idle = "rbxassetid://111111111",
+        run  = "rbxassetid://222222222",
+    }
+})
+
+-- Start idle loop
+anim:play(character, "idle", "Idle", true)
+
+humanoid.Running:Connect(function(speed)
+    if speed > 0.5 then
+        anim:stop(character, "idle")
+        anim:play(character, "run", "Movement", true)
+    else
+        anim:stop(character, "run")
+        anim:play(character, "idle", "Idle", true)
+    end
+end)
+```

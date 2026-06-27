@@ -1,0 +1,41 @@
+---
+title: "AnimationService:resume — Resume a Paused Animation"
+sidebarTitle: "resume"
+description: "AnimationService:resume(model, id) resumes a paused animation track at normal speed by restoring the track's play speed to 1."
+---
+
+`resume` restores a paused animation to normal playback speed by calling `AdjustSpeed(1)` on the stored track. The animation continues from the exact frame it was frozen at.
+
+## Signature
+
+```lua
+AnimationService:resume(model: Model, id: string)
+```
+
+## Parameters
+
+<ParamField path="model" type="Model" required>
+  The model containing the animation track to resume.
+</ParamField>
+
+<ParamField path="id" type="string" required>
+  The animation key to resume.
+</ParamField>
+
+## Returns
+
+None.
+
+## Example
+
+```lua
+anim:play(character, "dance", "Action", true)
+
+-- Pause on some event
+anim:pause(character, "dance")
+
+-- Resume when ready
+task.delay(2, function()
+    anim:resume(character, "dance")
+end)
+```

@@ -1,0 +1,81 @@
+---
+title: "Tweening and Lerping Instances with EZAnim"
+sidebarTitle: "Tweening"
+description: "Use EZAnim's built-in tween and lerp helpers to smoothly animate instance properties and move BaseParts without managing TweenService directly."
+---
+
+EZAnim includes two motion helpers that complement its animation playback: `tween` wraps Roblox's `TweenService` for smooth property interpolation, and `lerp` instantly moves a `BasePart` along a `Vector3` path.
+
+## Tweening Instance Properties
+
+`tween(instance, info, goal)` creates and plays a tween immediately, returning the `Tween` object:
+
+```lua
+local TweenInfo = TweenInfo.new(
+    0.5,                          -- duration (seconds)
+    Enum.EasingStyle.Quad,
+    Enum.EasingDirection.Out
+)
+
+-- Move a part to a new position
+anim:tween(somePart, TweenInfo, {
+    Position = Vector3.new(10, 5, 0)
+})
+
+-- Fade out a GUI element
+anim:tween(screenGui.Frame, TweenInfo, {
+    BackgroundTransparency = 1
+})
+```
+
+The returned `Tween` object gives you access to the `Completed` event:
+
+```lua
+local t = anim:tween(part, TweenInfo.new(1), { Position = Vector3.new(0, 10, 0) })
+t.Completed:Connect(function()
+    print("Tween finished!")
+end)
+```
+
+## Lerping a BasePart
+
+`lerp(instance, from, to, alpha)` sets a `BasePart`'s position to the interpolated point between `from` and `to` at blend factor `alpha` (0–1):
+
+```lua
+-- Move a part 50% of the way from origin to target
+anim:lerp(part, Vector3.new(0, 0, 0), Vector3.new(10, 0, 0), 0.5)
+-- Result: part.Position = Vector3.new(5, 0, 0)
+```
+
+`lerp` is a **one-shot** position assignment — it does not animate over time. Use it inside a `RunService.Heartbeat` loop to drive smooth motion manually:
+
+```lua
+local RunService = game:GetService("RunService")
+local startPos = part.Position
+local endPos = Vector3.new(50, 0, 50)
+local elapsed = 0
+local duration = 2
+
+RunService.Heartbeat:Connect(function(dt)
+    elapsed = elapsed + dt
+    local alpha = math.clamp(elapsed / duration, 0, 1)
+    anim:lerp(part, startPos, endPos, alpha)
+
+    if alpha >= 1 then
+        -- disconnect when done
+    end
+end)
+```
+
+<Note>
+  `lerp` only works on `BasePart` instances. Passing a non-BasePart will silently do nothing.
+</Note>
+
+## When to Use tween vs. lerp
+
+| | `tween` | `lerp` |
+|---|---|---|
+| **Drives itself** | Yes — fires and forgets | No — you drive it each frame |
+| **Works on** | Any tweenable property | `BasePart.Position` only |
+| **Returns** | `Tween` object | nothing |
+| **Best for** | UI animations, property changes | Manual, frame-driven motion |

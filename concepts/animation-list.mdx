@@ -1,0 +1,76 @@
+---
+title: "Animation List: Mapping Names to Asset IDs"
+sidebarTitle: "Animation List"
+description: "The animation list maps friendly string keys to Roblox animation asset IDs. Learn how to structure it and reference animations throughout your game."
+---
+
+The animation list is the dictionary you pass to `AnimationService.init`. It maps friendly string keys — like `"idle"` or `"attack"` — to Roblox animation asset IDs. Every other EZAnim method references animations by these keys, so choosing clear, consistent names matters.
+
+## Structure
+
+```lua
+local anim = AnimationService.init({
+    List = {
+        idle     = "rbxassetid://111111111",
+        walk     = "rbxassetid://222222222",
+        run      = "rbxassetid://333333333",
+        jump     = "rbxassetid://444444444",
+        attack   = "rbxassetid://555555555",
+        death    = "rbxassetid://666666666",
+    }
+})
+```
+
+The `List` field is a `{[string]: string}` dictionary:
+- **Key** — the name you use in `play`, `stop`, `pause`, `resume`, `getAnim`, `isPlaying`, `onMarker`, and `onStopped`.
+- **Value** — the full `rbxassetid://` string for your uploaded Roblox animation.
+
+## Naming Conventions
+
+Use lowercase, descriptive keys. Avoid spaces — use underscores if needed:
+
+```lua
+List = {
+    idle          = "rbxassetid://...",
+    run           = "rbxassetid://...",
+    attack_light  = "rbxassetid://...",
+    attack_heavy  = "rbxassetid://...",
+    emote_wave    = "rbxassetid://...",
+}
+```
+
+<Tip>
+  Group related animations with a shared prefix (e.g. `attack_light`, `attack_heavy`) so they are easy to find and manage.
+</Tip>
+
+## Referencing an Unknown Animation
+
+If you call `play` (or any method) with a key that does not exist in the list, EZAnim logs a warning and returns without playing anything:
+
+```
+AnimationService: animation not found: typo_name
+```
+
+Always make sure the key you pass to `play` exactly matches a key in your `List`.
+
+## Multiple Instances
+
+You can create multiple `AnimationService` instances with different lists — useful if different parts of your game manage different sets of animations:
+
+```lua
+local npcAnim = AnimationService.init({
+    List = {
+        patrol = "rbxassetid://100000001",
+        alert  = "rbxassetid://100000002",
+    }
+})
+
+local playerAnim = AnimationService.init({
+    List = {
+        idle = "rbxassetid://200000001",
+        run  = "rbxassetid://200000002",
+    }
+})
+```
+
+Each instance maintains its own internal track and cache storage per model.

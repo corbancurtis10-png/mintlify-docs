@@ -1,13 +1,11 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "name": "EZAnim",
+  "projectType": "sdk-library",
+  "projectName": "EZAnim",
+  "projectDescription": "A lightweight Roblox Luau animation service module that simplifies playing, stopping, pausing, tweening, and ragdolling character animations.",
   "theme": "maple",
-  "colors": {
-    "primary": "#ef7025",
-    "light": "#eec9bc",
-    "dark": "#4fa1ab"
-  },
-  "favicon": "/favicon.svg",
+  "primaryColor": "#ef7025",
+  "lightColor": "#eec9bc",
+  "darkColor": "#4fa1ab",
   "navigation": {
     "tabs": [
       {
@@ -85,10 +83,28 @@
       }
     ]
   },
-  "navbar": {
-    "primary": {
-      "type": "github",
-      "href": "https://github.com"
-    }
-  }
+  "keyFeatures": [
+    "Simple animation playback with priority control",
+    "Per-model animation track management",
+    "Pause and resume animations via speed adjustment",
+    "Animation event markers and stopped callbacks",
+    "One-line ragdoll and unragdoll with optional duration",
+    "Built-in TweenService and Vector3 lerp helpers",
+    "Animation caching to reduce instance creation"
+  ],
+  "publicApiSurface": [
+    "AnimationService.init(Options)",
+    "AnimationService:play(model, id, type, looped?)",
+    "AnimationService:stop(model, id?)",
+    "AnimationService:pause(model, id)",
+    "AnimationService:resume(model, id)",
+    "AnimationService:getAnim(model, id)",
+    "AnimationService:isPlaying(model, id)",
+    "AnimationService:tween(instance, info, goal)",
+    "AnimationService:lerp(instance, from, to, alpha)",
+    "AnimationService:ragdoll(model, duration?)",
+    "AnimationService:unragdoll(model)",
+    "AnimationService:onMarker(model, id, markerName, callback)",
+    "AnimationService:onStopped(model, id, callback)"
+  ]
 }

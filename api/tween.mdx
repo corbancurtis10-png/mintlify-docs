@@ -1,0 +1,53 @@
+---
+title: "AnimationService:tween — Tween Any Instance Property"
+sidebarTitle: "tween"
+description: "AnimationService:tween(instance, info, goal) creates and plays a TweenService tween immediately, returning the Tween object for event access."
+---
+
+`tween` is a convenience wrapper around Roblox's `TweenService:Create`. It creates a tween, plays it immediately, and returns the `Tween` object so you can listen to its `Completed` event or cancel it.
+
+## Signature
+
+```lua
+AnimationService:tween(
+    instance: Instance,
+    info: TweenInfo,
+    goal: {[string]: any}
+) -> Tween
+```
+
+## Parameters
+
+<ParamField path="instance" type="Instance" required>
+  The Roblox instance whose properties you want to animate.
+</ParamField>
+
+<ParamField path="info" type="TweenInfo" required>
+  A `TweenInfo` object specifying duration, easing style, easing direction, repeat count, reverses, and delay.
+</ParamField>
+
+<ParamField path="goal" type="{[string]: any}" required>
+  A dictionary of property names and their target values. Only tweenable properties are supported.
+</ParamField>
+
+## Returns
+
+The `Tween` object that was created and started.
+
+## Examples
+
+```lua
+local info = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+-- Move a part
+anim:tween(part, info, { Position = Vector3.new(10, 5, 0) })
+
+-- Fade out a UI frame
+anim:tween(frame, info, { BackgroundTransparency = 1 })
+
+-- Listen for completion
+local t = anim:tween(part, TweenInfo.new(1), { CFrame = CFrame.new(0, 10, 0) })
+t.Completed:Connect(function()
+    print("Tween done")
+end)
+```

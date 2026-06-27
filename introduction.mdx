@@ -1,0 +1,63 @@
+---
+title: "EZAnim: Roblox Animation Service Overview"
+sidebarTitle: "Introduction"
+description: "EZAnim simplifies Roblox character animation. Learn what it does, why it exists, and how it fits into your Roblox project."
+---
+
+EZAnim is a Roblox Luau module that wraps Roblox's built-in `Animator` API into a clean, minimal service object. Instead of manually loading animations, managing tracks, and wiring up callbacks for every character in your game, you initialize EZAnim once with your animation ID list and call simple methods like `play`, `stop`, `pause`, and `ragdoll`.
+
+## Why EZAnim?
+
+Roblox's default animation system is powerful but verbose. A typical workflow without EZAnim looks like this:
+
+```lua
+local humanoid = character:FindFirstChildOfClass("Humanoid")
+local animator = humanoid:FindFirstChildOfClass("Animator")
+local anim = Instance.new("Animation")
+anim.AnimationId = "rbxassetid://123456789"
+local track = animator:LoadAnimation(anim)
+track.Priority = Enum.AnimationPriority.Action
+track.Looped = false
+track:Play()
+```
+
+With EZAnim, the same result is one line:
+
+```lua
+anim:play(character, "attack", "Action", false)
+```
+
+EZAnim handles animator lookup, animation object creation, caching, priority assignment, and track storage automatically.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Playback Control" icon="play">
+    Play, stop, pause, and resume animations on any Humanoid model with a single method call.
+  </Card>
+  <Card title="Priority System" icon="list-ol">
+    Assign Idle, Movement, Action, Action2, Action3, or Action4 priority to every animation.
+  </Card>
+  <Card title="Animation Caching" icon="database">
+    Each animation is loaded once per model and reused, reducing instance overhead.
+  </Card>
+  <Card title="Ragdoll Physics" icon="person-falling">
+    One-line ragdoll and automatic unragdoll using BallSocketConstraints.
+  </Card>
+  <Card title="Event Callbacks" icon="bell">
+    Listen for animation marker events or the stopped signal with clean callback syntax.
+  </Card>
+  <Card title="Tween & Lerp" icon="arrows-left-right">
+    Built-in TweenService wrapper and Vector3 lerp helper for motion effects.
+  </Card>
+</CardGroup>
+
+## Requirements
+
+- Roblox Studio or a Rojo-based workflow
+- Target models must have a `Humanoid` child
+- Animation IDs must be uploaded to Roblox and accessible by your game
+
+<Tip>
+  EZAnim automatically creates an `Animator` under the `Humanoid` if one does not already exist.
+</Tip>

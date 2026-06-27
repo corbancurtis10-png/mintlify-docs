@@ -1,0 +1,63 @@
+---
+title: "Animation Tracks and Caching in EZAnim"
+sidebarTitle: "Tracks"
+description: "Learn how EZAnim stores and caches animation tracks per model, and what that means for performance and playback behavior in your Roblox game."
+---
+
+Every time you call `play`, EZAnim loads an animation track onto the model's `Animator` and stores it internally. Understanding how tracks and caching work helps you write efficient, predictable animation code.
+
+## What is an Animation Track?
+
+A Roblox `AnimationTrack` is the object returned by `Animator:LoadAnimation()`. It represents a single playing (or stopped) animation instance on a specific `Animator`. You can control its speed, listen to its events, and check whether it is currently playing.
+
+EZAnim stores one track **per model per animation key**. Calling `play` on a model with the same key twice stops and destroys the previous track before loading a new one.
+
+## Caching
+
+To avoid creating a new `Animation` instance every time `play` is called, EZAnim caches the `Animation` object the first time you play a given key on a model:
+
+```lua
+-- First call: creates an Animation object, loads and caches it
+anim:play(character, "idle", "Idle", true)
+
+-- Subsequent calls: reuses the cached Animation object
+anim:play(character, "idle", "Idle", true)
+```
+
+The cache lives per model, so two different models each get their own cached `Animation` objects.
+
+## Accessing a Track Directly
+
+Use `getAnim` to retrieve a stored track:
+
+```lua
+local track = anim:getAnim(character, "attack")
+if track then
+    print("Attack speed:", track.Speed)
+    print("Is looped:", track.Looped)
+    print("Time position:", track.TimePosition)
+end
+```
+
+This gives you direct access to the underlying `AnimationTrack` for advanced use cases.
+
+## Track Lifecycle
+
+1. `play` is called → existing track (if any) is stopped and destroyed → new track is loaded from cache → track is played and stored.
+2. `stop` is called → track's `:Stop()` method is invoked. The track remains stored.
+3. `pause` is called → track speed is set to `0` via `AdjustSpeed(0)`.
+4. `resume` is called → track speed is restored to `1` via `AdjustSpeed(1)`.
+
+<Warning>
+  If you call `play` on a key that is already playing, the current track is **stopped and replaced**. To check before playing, use `isPlaying` first.
+</Warning>
+
+## Checking Playback State
+
+```lua
+if anim:isPlaying(character, "attack") then
+    print("Attack animation is active")
+end
+```
+
+`isPlaying` returns `true` if the stored track exists and its `IsPlaying` property is `true`.
