@@ -40,310 +40,384 @@ If you dont use "Rojo" then add the [Module](https://create.roblox.com/store/ass
     local AnimationService = {}
     AnimationService.__index = AnimationService
     
-    -------------------------------------------
-    -- PriorityMap
-    -------------------------------------------
+    ----------------------------------------------------
+    -- Priority Map
+    ----------------------------------------------------
     
     local PriorityMap = {
-    Idle = Enum.AnimationPriority.Idle,
-    Movement = Enum.AnimationPriority.Movement,
-    Action = Enum.AnimationPriority.Action,
-    Action2 = Enum.AnimationPriority.Action2,
-    Action3 = Enum.AnimationPriority.Action3,
-    Action4 = Enum.AnimationPriority.Action4,
+    	Idle = Enum.AnimationPriority.Idle,
+    	Movement = Enum.AnimationPriority.Movement,
+    	Action = Enum.AnimationPriority.Action,
+    	Action2 = Enum.AnimationPriority.Action2,
+    	Action3 = Enum.AnimationPriority.Action3,
+    	Action4 = Enum.AnimationPriority.Action4,
     }
     
+    ----------------------------------------------------
+    -- Services
     ----------------------------------------------------
     
     local TweenService = game:GetService("TweenService")
     
     ----------------------------------------------------
+    -- Types
+    ----------------------------------------------------
     
     export type Options = {
-    List: {[string]: string}
+    	List: {[string]: string}
     }
     
-    -------------------------------------------
+    ----------------------------------------------------
     -- Constructor
-    -------------------------------------------
+    ----------------------------------------------------
     
-    function AnimationService.init(Options: Options)
-    return setmetatable({
-    	_AnimationList = Options.List or {},
-    	_Animators = {},
-    	_Tracks = {},
-    	_AnimationCache = {},
-    	_Ragdolls = {},	
-    }, AnimationService)
+    function AnimationService.init(options: Options)
+    	local self = setmetatable({}, AnimationService)
+    
+    	self._AnimationList = options.List or {}
+    
+    	self._Animators = {}
+    	self._Tracks = {}
+    	self._AnimationCache = {}
+    	self._Ragdolls = {}
+    	self._Connections = {}
+    	self._States = {}
+    
+    	return self
     end
     
+    ----------------------------------------------------
+    -- Cleanup
+    ----------------------------------------------------
+    
+    function AnimationService:_cleanupModel(model: Model)
+    	if self._Tracks[model] then
+    		for _, track in pairs(self._Tracks[model]) do
+    			pcall(function()
+    				track:Stop()
+    				track:Destroy()
+    			end)
+    		end
+    	end
+    
+    	if self._Connections[model] then
+    		for _, conn in ipairs(self._Connections[model]) do
+    			pcall(function()
+    				conn:Disconnect()
+    			end)
+    		end
+    	end
+    
+    	self._Tracks[model] = nil
+    	self._Animators[model] = nil
+    	self._AnimationCache[model] = nil
+    	self._Ragdolls[model] = nil
+    	self._Connections[model] = nil
+    	self._States[model] = nil
+    end
+    
+    ----------------------------------------------------
+    -- Animator Getter
+    ----------------------------------------------------
     
     function AnimationService:_getAnimator(model: Model)
-    if not model then return nil end
+    	if not model then return nil end
     
-    local humanoid = model:FindFirstChildOfClass("Humanoid")
-    if not humanoid then
-    	warn("AnimationService: No Humanoid in", model.Name)
-    	return nil
+    	local humanoid = model:FindFirstChildOfClass("Humanoid")
+    	if not humanoid then
+    		warn("AnimationService: No Humanoid in", model.Name)
+    		return nil
+    	end
+    
+    	local animator = humanoid:FindFirstChildOfClass("Animator")
+    	if not animator then
+    		animator = Instance.new("Animator")
+    		animator.Parent = humanoid
+    	end
+    
+    	self._Animators[model] = animator
+    	self._Tracks[model] = self._Tracks[model] or {}
+    	self._AnimationCache[model] = self._AnimationCache[model] or {}
+    	self._Connections[model] = self._Connections[model] or {}
+    
+    	if not model:GetAttribute("__AnimServiceBound") then
+    		model:SetAttribute("__AnimServiceBound", true)
+    
+    		model.AncestryChanged:Connect(function(_, parent)
+    			if not parent then
+    				self:_cleanupModel(model)
+    			end
+    		end)
+    	end
+    
+    	return animator
     end
     
-    local animator = humanoid:FindFirstChildOfClass("Animator")
-    if not animator then
-    	animator = Instance.new("Animator")
-    	animator.Parent = humanoid
-    end
-    
-    self._Animators[model] = animator
-    self._Tracks[model] = self._Tracks[model] or {}
-    self._AnimationCache[model] = self._AnimationCache[model] or {}
-    
-    return animator
-    end
-    
-    -------------------------------------------
+    ----------------------------------------------------
     -- Play Animation
-    -------------------------------------------
+    ----------------------------------------------------
     
-    function AnimationService:play(model: Model, id: string, type: string, looped: boolean?)
-    if not model then
-    	warn("AnimationService: model is nil")
-    	return
+    function AnimationService:play(model: Model, id: string, animType: string?, looped: boolean?)
+    	if not model or not id then
+    		warn("AnimationService: invalid play call")
+    		return
+    	end
+    
+    	local animator = self:_getAnimator(model)
+    	if not animator then return end
+    
+    	local animId = self._AnimationList[id]
+    	if not animId then
+    		warn("AnimationService: animation not found:", id)
+    		return
+    	end
+    
+    	self._Tracks[model] = self._Tracks[model] or {}
+    	self._AnimationCache[model] = self._AnimationCache[model] or {}
+    
+    	-- cache Animation object
+    	if not self._AnimationCache[model][id] then
+    		local anim = Instance.new("Animation")
+    		anim.AnimationId = animId
+    		self._AnimationCache[model][id] = anim
+    	end
+    
+    	local existingTrack = self._Tracks[model][id]
+    	if existingTrack then
+    		existingTrack:Play()
+    		return existingTrack
+    	end
+    
+    	local track = animator:LoadAnimation(self._AnimationCache[model][id])
+    
+    	local priority = PriorityMap[string.lower(animType or "movement")] or Enum.AnimationPriority.Movement
+    	track.Priority = priority
+    
+    	track.Looped = looped or false
+    	track:Play()
+    
+    	self._Tracks[model][id] = track
+    
+    	return track
     end
     
-    if not id then
-    	warn("AnimationService: animation id is nil")
-    	return
-    end
-    
-    local animator = self:_getAnimator(model)
-    if not animator then return end
-    
-    local animId = self._AnimationList[id]
-    if not animId then
-    	warn("AnimationService: animation not found:", id)
-    	return
-    end
-    
-    self._Tracks[model] = self._Tracks[model] or {}
-    self._AnimationCache[model] = self._AnimationCache[model] or {}
-    
-    if not self._AnimationCache[model][id] then
-    	local anim = Instance.new("Animation")
-    	anim.AnimationId = animId
-    	self._AnimationCache[model][id] = anim
-    end
-    
-    if self._Tracks[model][id] then
-    	self._Tracks[model][id]:Stop()
-    	self._Tracks[model][id]:Destroy()
-    end
-    
-    local track = animator:LoadAnimation(self._AnimationCache[model][id])
-    
-    type = string.lower(type or "movement")
-    track.Priority = PriorityMap[type] or Enum.AnimationPriority.Movement
-    
-    track.Looped = looped or false
-    track:Play()
-    
-    self._Tracks[model][id] = track
-    
-    return track
-    end
-    
-    -------------------------------------------
+    ----------------------------------------------------
     -- Stop Animation
-    -------------------------------------------
+    ----------------------------------------------------
     
     function AnimationService:stop(model: Model, id: string?)
-    if not model then return end
-    if not self._Tracks[model] then return end
+    	if not model or not self._Tracks[model] then return end
     
-    if id then
-    	local track = self._Tracks[model][id]
-    	if track then
-    		track:Stop()
+    	if id then
+    		local track = self._Tracks[model][id]
+    		if track then
+    			track:Stop()
+    		end
+    	else
+    		for _, track in pairs(self._Tracks[model]) do
+    			track:Stop()
+    		end
     	end
-    else
+    end
+    
+    ----------------------------------------------------
+    -- Stop All
+    ----------------------------------------------------
+    
+    function AnimationService:stopAll(model: Model)
+    	if not self._Tracks[model] then return end
+    
     	for _, track in pairs(self._Tracks[model]) do
     		track:Stop()
     	end
     end
-    end
     
-    -------------------------------------------
-    -- Pause Animation
-    -------------------------------------------
+    ----------------------------------------------------
+    -- Pause / Resume
+    ----------------------------------------------------
     
     function AnimationService:pause(model: Model, id: string)
-    local track = self._Tracks[model] and self._Tracks[model][id]
-    if track then
-    	track:AdjustSpeed(0)
+    	local track = self._Tracks[model] and self._Tracks[model][id]
+    	if track then
+    		track._lastSpeed = track.Speed
+    		track:AdjustSpeed(0)
+    	end
     end
-    end
-    
-    -------------------------------------------
-    -- Resume Animation
-    -------------------------------------------
     
     function AnimationService:resume(model: Model, id: string)
-    local track = self._Tracks[model] and self._Tracks[model][id]
-    if track then
-    	track:AdjustSpeed(1)
-    end
+    	local track = self._Tracks[model] and self._Tracks[model][id]
+    	if track then
+    		track:AdjustSpeed(track._lastSpeed or 1)
+    	end
     end
     
-    -------------------------------------------
+    ----------------------------------------------------
     -- Get Animation
-    -------------------------------------------
+    ----------------------------------------------------
     
     function AnimationService:getAnim(model: Model, id: string)
-    return self._Tracks[model] and self._Tracks[model][id]
+    	return self._Tracks[model] and self._Tracks[model][id]
     end
     
-    -------------------------------------------
-    -- Tween
-    -------------------------------------------
+    ----------------------------------------------------
+    -- Tween Helper
+    ----------------------------------------------------
     
     function AnimationService:tween(instance: Instance, info: TweenInfo, goal: {})
-    local tween = TweenService:Create(instance, info, goal)
-    tween:Play()
-    return tween
+    	local tween = TweenService:Create(instance, info, goal)
+    	tween:Play()
+    	return tween
     end
     
-    -------------------------------------------
-    -- Lerp
-    -------------------------------------------
+    ----------------------------------------------------
+    -- Lerp Helper
+    ----------------------------------------------------
     
-    function AnimationService:lerp(instance: Instance, from: Vector3, to : Vector3, alpha : number)
-    if instance:IsA("BasePart") then
-    	instance.Position = from:Lerp(to, alpha)
-    end
+    function AnimationService:lerp(instance: Instance, from: Vector3, to: Vector3, alpha: number)
+    	if instance:IsA("BasePart") then
+    		instance.Position = from:Lerp(to, alpha)
+    	end
     end
     
-    -------------------------------------------
+    ----------------------------------------------------
+    -- State System
+    ----------------------------------------------------
+    
+    function AnimationService:setState(model: Model, state: string)
+    	self._States[model] = state
+    end
+    
+    function AnimationService:getState(model: Model)
+    	return self._States[model]
+    end
+    
+    ----------------------------------------------------
+    -- Marker Event
+    ----------------------------------------------------
+    
+    function AnimationService:onMarker(model: Model, id: string, markerName: string, callback)
+    	local track = self:getAnim(model, id)
+    	if not track then return end
+    
+    	local conn = track:GetMarkerReachedSignal(markerName):Connect(callback)
+    
+    	self._Connections[model] = self._Connections[model] or {}
+    	table.insert(self._Connections[model], conn)
+    
+    	return conn
+    end
+    
+    ----------------------------------------------------
+    -- Animation Stopped Event
+    ----------------------------------------------------
+    
+    function AnimationService:onStopped(model: Model, id: string, callback)
+    	local track = self:getAnim(model, id)
+    	if not track then return end
+    
+    	local conn = track.Stopped:Connect(callback)
+    
+    	self._Connections[model] = self._Connections[model] or {}
+    	table.insert(self._Connections[model], conn)
+    
+    	return conn
+    end
+    
+    ----------------------------------------------------
+    -- Is Playing
+    ----------------------------------------------------
+    
+    function AnimationService:isPlaying(model: Model, id: string): boolean
+    	local track = self:getAnim(model, id)
+    	return track and track.IsPlaying or false
+    end
+    
+    ----------------------------------------------------
     -- Ragdoll
-    -------------------------------------------
+    ----------------------------------------------------
     
     function AnimationService:ragdoll(model: Model, duration: number?)
-    if not model then return end
+    	if not model then return end
     
-    local humanoid = model:FindFirstChildOfClass("Humanoid")
-    if not humanoid then return end
+    	local humanoid = model:FindFirstChildOfClass("Humanoid")
+    	if not humanoid then return end
     
-    self._Ragdolls = self._Ragdolls or {}
-    self._Ragdolls[model] = self._Ragdolls[model] or {}
+    	self._Ragdolls[model] = {}
     
-    humanoid:ChangeState(Enum.HumanoidStateType.Physics)
-    humanoid.PlatformStand = true
-    humanoid.AutoRotate = false
+    	humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+    	humanoid.PlatformStand = true
+    	humanoid.AutoRotate = false
     
-    for _, motor in ipairs(model:GetDescendants()) do
-    	if motor:IsA("Motor6D") and motor.Part0 and motor.Part1 then
-    		table.insert(self._Ragdolls[model], {
-    			Name = motor.Name,
-    			Part0 = motor.Part0,
-    			Part1 = motor.Part1,
-    			C0 = motor.C0,
-    			C1 = motor.C1
-    		})
+    	for _, motor in ipairs(model:GetDescendants()) do
+    		if motor:IsA("Motor6D") then
     
-    		local a0 = Instance.new("Attachment")
-    		local a1 = Instance.new("Attachment")
+    			table.insert(self._Ragdolls[model], {
+    				Motor = motor,
+    				C0 = motor.C0,
+    				C1 = motor.C1,
+    				Enabled = motor.Enabled
+    			})
     
-    		a0.CFrame = motor.C0
-    		a1.CFrame = motor.C1
+    			local a0 = Instance.new("Attachment")
+    			local a1 = Instance.new("Attachment")
     
-    		a0.Parent = motor.Part0
-    		a1.Parent = motor.Part1
+    			a0.CFrame = motor.C0
+    			a1.CFrame = motor.C1
     
-    		local socket = Instance.new("BallSocketConstraint")
-    		socket.Attachment0 = a0
-    		socket.Attachment1 = a1
-    		socket.Parent = motor.Part0
+    			a0.Parent = motor.Part0
+    			a1.Parent = motor.Part1
     
-    		motor.Enabled = false
+    			local socket = Instance.new("BallSocketConstraint")
+    			socket.Attachment0 = a0
+    			socket.Attachment1 = a1
+    			socket.Parent = motor.Part0
+    
+    			motor.Enabled = false
+    		end
+    	end
+    
+    	if duration then
+    		task.delay(duration, function()
+    			self:unragdoll(model)
+    		end)
     	end
     end
     
-    if duration then
-    	task.delay(duration, function()
-    		self:unragdoll(model)
-    	end)
-    end
-    end
-    
-    -------------------------------------------------
-    -- UnRagdoll
-    -------------------------------------------------
+    ----------------------------------------------------
+    -- Unragdoll
+    ----------------------------------------------------
     
     function AnimationService:unragdoll(model: Model)
-    if not model then return end
+    	if not model then return end
     
-    local humanoid = model:FindFirstChildOfClass("Humanoid")
-    if not humanoid then return end
+    	local humanoid = model:FindFirstChildOfClass("Humanoid")
+    	if not humanoid then return end
     
-    self._Ragdolls = self._Ragdolls or {}
-    local data = self._Ragdolls[model]
-    if not data then return end
+    	local data = self._Ragdolls[model]
+    	if not data then return end
     
-    for _, motorData in ipairs(data) do
-    	local motor = model:FindFirstChild(motorData.Name, true)
-    
-    	if motor and motor:IsA("Motor6D") then
-    		motor.Enabled = true
+    	for _, entry in ipairs(data) do
+    		if entry.Motor then
+    			entry.Motor.C0 = entry.C0
+    			entry.Motor.C1 = entry.C1
+    			entry.Motor.Enabled = true
+    		end
     	end
-    end
     
-    for _, obj in ipairs(model:GetDescendants()) do
-    	if obj:IsA("BallSocketConstraint")
-    		or obj:IsA("Attachment") then
-    		obj:Destroy()
+    	for _, obj in ipairs(model:GetDescendants()) do
+    		if obj:IsA("BallSocketConstraint") or obj:IsA("Attachment") then
+    			obj:Destroy()
+    		end
     	end
+    
+    	humanoid.PlatformStand = false
+    	humanoid.AutoRotate = true
+    	humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+    
+    	self._Ragdolls[model] = nil
     end
     
-    humanoid.PlatformStand = false
-    humanoid.AutoRotate = true
-    humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-    
-    self._Ragdolls[model] = nil
-    end
-    
-    ------------------------------------------------------------
-    -- If Animation is Playing
-    ------------------------------------------------------------
-    
-    function AnimationService:isPlaying(model : Model, id : string) : boolean
-    local track = self._Tracks[model] and self._Tracks[model][id]
-    if track then
-    	return track.IsPlaying
-    end
-    end
-    
-    ------------------------------------------------------------
-    -- When Animation hits a event marker
-    ------------------------------------------------------------
-    
-    function AnimationService:onMarker(model : Model, id : string, markerName : string, callback)
-    local track = self:getAnim(model, id)
-    
-    if track then
-    	return track:GetMarkerReachedSignal(markerName):Connect(callback)
-    end
-    end
-    
-    ------------------------------------------------------------
-    -- When Animation Stops
-    ------------------------------------------------------------
-    
-    function AnimationService:onStopped(model : Model, id : string, callback)
-    local track = self:getAnim(model, id)
-    if track then
-    	return track.Stopped:Connect(callback)
-    end
-    end
-    
-    ------------------------------------------------------------
+    ----------------------------------------------------
     
     return AnimationService
     ```
