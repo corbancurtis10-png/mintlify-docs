@@ -1,5 +1,5 @@
 ---
-title: "Reacting to Animation Events in EZAnim"
+title: "Reacting to Animation Events in Roblox with EZAnim"
 sidebarTitle: "Events"
 description: "Use EZAnim's onMarker and onStopped callbacks to trigger game logic when an animation reaches a keyframe marker or finishes playing."
 ---
@@ -8,53 +8,52 @@ EZAnim exposes two event callbacks that let your game logic react to animation s
 
 ## Animation Marker Events
 
-Roblox lets you embed named **keyframe markers** in animations using the Animation Editor. `onMarker` connects a callback to fire each time the animation passes that marker:
+Roblox lets you embed named **keyframe markers** in animations using the Animation Editor. `onMarker` connects a callback to fire each time the animation passes that marker.
+
+Both `onMarker` and `onStopped` use `getAnim` internally, so the track must already exist before you call them. Call `play` first, then set up your event connections:
 
 ```lua
--- Fire when the "attack" animation reaches the "HitFrame" marker
-anim:onMarker(character, "attack", "HitFrame", function()
+-- Play the animation first so the track exists
+anim:play(character, "attack", "Action", false)
+
+-- Then connect the marker callback
+local connection = anim:onMarker(character, "attack", "HitFrame", function()
     print("Hit frame reached — deal damage!")
     dealDamage(target)
 end)
-
--- Play the animation
-anim:play(character, "attack", "Action", false)
 ```
 
-`onMarker` returns the `RBXScriptConnection` so you can disconnect it later:
+`onMarker` returns an `RBXScriptConnection?` — it returns `nil` if the track was not found. Always store and check the return value if you need to disconnect later:
 
 ```lua
 local connection = anim:onMarker(character, "attack", "HitFrame", function()
     -- ...
 end)
 
--- Disconnect when no longer needed
-connection:Disconnect()
+if connection then
+    -- Disconnect when no longer needed
+    connection:Disconnect()
+end
 ```
 
 <Warning>
-  Call `onMarker` **before** calling `play`, or ensure the track is already loaded via a previous `play` call. `onMarker` uses `getAnim` internally and returns `nil` if the track does not exist yet.
+  `onMarker` uses `getAnim` internally and returns `nil` if the track does not exist yet. Always call `play` before wiring up `onMarker`, or ensure the track was loaded by a previous `play` call.
 </Warning>
 
 ## Stopped Event
 
-`onStopped` connects a callback that fires once the animation track fully stops:
+`onStopped` connects a callback that fires once the animation track fully stops. Like `onMarker`, call `play` first so the track exists, then call `onStopped`:
 
 ```lua
+-- Play first so the track is loaded
 anim:play(character, "death", "Action", false)
 
-anim:onStopped(character, "death", function()
+-- Then connect the stopped callback
+local conn = anim:onStopped(character, "death", function()
     print("Death animation complete — respawn player")
     respawnPlayer(player)
 end)
-```
-
-Like `onMarker`, it returns the `RBXScriptConnection`:
-
-```lua
-local conn = anim:onStopped(character, "death", function()
-    respawnPlayer(player)
-end)
+-- conn is RBXScriptConnection? — nil if track was not found
 ```
 
 ## Chaining Animations
@@ -73,7 +72,7 @@ end)
 ## Combining Markers and Stopped
 
 ```lua
--- Play a combo attack
+-- Play a combo attack first, then connect events
 anim:play(character, "combo", "Action", false)
 
 -- Deal damage at the hit frame
@@ -88,5 +87,5 @@ end)
 ```
 
 <Tip>
-  Both `onMarker` and `onStopped` require the track to exist (i.e. `play` must have been called first for that model + key combination). Check the return value — if it is `nil`, the track was not found.
+  Both `onMarker` and `onStopped` return `RBXScriptConnection?` — `nil` if the track was not found. Check the return value when you need to disconnect, and always ensure `play` has been called first for that model and animation key.
 </Tip>

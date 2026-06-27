@@ -1,5 +1,5 @@
 ---
-title: "Tweening and Lerping Instances with EZAnim"
+title: "Tweening and Lerping Instance Properties with EZAnim"
 sidebarTitle: "Tweening"
 description: "Use EZAnim's built-in tween and lerp helpers to smoothly animate instance properties and move BaseParts without managing TweenService directly."
 ---
@@ -11,19 +11,19 @@ EZAnim includes two motion helpers that complement its animation playback: `twee
 `tween(instance, info, goal)` creates and plays a tween immediately, returning the `Tween` object:
 
 ```lua
-local TweenInfo = TweenInfo.new(
+local tweenInfo = TweenInfo.new(
     0.5,                          -- duration (seconds)
     Enum.EasingStyle.Quad,
     Enum.EasingDirection.Out
 )
 
 -- Move a part to a new position
-anim:tween(somePart, TweenInfo, {
+anim:tween(somePart, tweenInfo, {
     Position = Vector3.new(10, 5, 0)
 })
 
 -- Fade out a GUI element
-anim:tween(screenGui.Frame, TweenInfo, {
+anim:tween(screenGui.Frame, tweenInfo, {
     BackgroundTransparency = 1
 })
 ```
@@ -68,7 +68,7 @@ end)
 ```
 
 <Note>
-  `lerp` only works on `BasePart` instances. Passing a non-BasePart will silently do nothing.
+  `lerp` only works on `BasePart` instances. Passing any other instance type will silently do nothing.
 </Note>
 
 ## When to Use tween vs. lerp

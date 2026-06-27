@@ -1,15 +1,54 @@
 ---
-title: "Animation Priorities in EZAnim"
+title: "Animation Priorities in EZAnim: How Type Strings Work"
 sidebarTitle: "Priorities"
-description: "Understand how EZAnim maps priority strings to Roblox AnimationPriority enums, and when to use Idle, Movement, Action, and higher priorities."
+description: "Understand how EZAnim handles the type parameter in play calls, how priority lookup works in practice, and what default priority is applied."
 ---
 
-When two or more animations play at the same time on a character, Roblox uses the animation's **priority** to determine which one takes precedence. EZAnim maps six priority string values to Roblox's `Enum.AnimationPriority` values so you can set priority directly from the `play` call.
+When two or more animations play at the same time on a character, Roblox uses the animation's **priority** to determine which one takes precedence. EZAnim accepts a `type` string on every `play` call and attempts to map it to a `Roblox Enum.AnimationPriority` value.
 
-## Priority Levels
+## How Priority Lookup Works
 
-| `type` string | Roblox Enum | Typical Use |
-|---------------|-------------|-------------|
+Internally, EZAnim lowercases the `type` argument before performing the lookup:
+
+```lua
+type = string.lower(type or "movement")
+track.Priority = PriorityMap[type] or Enum.AnimationPriority.Movement
+```
+
+The internal `PriorityMap` has **capitalized** keys (`"Idle"`, `"Movement"`, `"Action"`, etc.). Because the input is lowercased before lookup, the lowercased string (e.g. `"idle"`) never matches a capitalized key (e.g. `"Idle"`), so the lookup always returns `nil` and the priority always falls back to `Enum.AnimationPriority.Movement`.
+
+<Warning>
+  Due to the mismatch between the lowercased lookup key and the capitalized map keys, **the `type` parameter has no effect on priority in practice**. Every animation is played at `Enum.AnimationPriority.Movement` regardless of the value you pass.
+</Warning>
+
+## Setting Priority
+
+Even though the `type` parameter does not currently affect priority, you should still pass it correctly so your code is forward-compatible and self-documenting:
+
+```lua
+-- All of these will play at Enum.AnimationPriority.Movement in practice
+anim:play(character, "idle", "Idle", true)
+anim:play(character, "run", "Movement", true)
+anim:play(character, "attack", "Action", false)
+```
+
+## Default Priority
+
+If you omit `type` or pass an unrecognized string, EZAnim explicitly defaults to `Enum.AnimationPriority.Movement` — the same value used for all inputs:
+
+```lua
+-- These all result in Enum.AnimationPriority.Movement
+anim:play(character, "run")              -- type omitted
+anim:play(character, "run", "Action")    -- type recognized but lowercased before lookup
+anim:play(character, "run", "unknown")   -- type unrecognized
+```
+
+## Intended Priority Levels
+
+The following table shows the intended mapping as defined in the source. These values are not reachable through the `type` parameter today, but represent the design intent:
+
+| Intended `type` string | Roblox Enum | Typical Use |
+|------------------------|-------------|-------------|
 | `"Idle"` | `Enum.AnimationPriority.Idle` | Standing still, breathing cycles |
 | `"Movement"` | `Enum.AnimationPriority.Movement` | Walking, running, swimming |
 | `"Action"` | `Enum.AnimationPriority.Action` | Attacking, interacting, emoting |
@@ -17,40 +56,4 @@ When two or more animations play at the same time on a character, Roblox uses th
 | `"Action3"` | `Enum.AnimationPriority.Action3` | Tertiary action layer |
 | `"Action4"` | `Enum.AnimationPriority.Action4` | Highest priority action |
 
-Higher priority animations override lower priority ones. `Action4` > `Action3` > `Action2` > `Action` > `Movement` > `Idle`.
-
-## Setting Priority
-
-Pass the priority as the third argument to `play`:
-
-```lua
--- Low priority: plays when nothing else is active
-anim:play(character, "idle", "Idle", true)
-
--- Medium priority: overrides idle
-anim:play(character, "run", "Movement", true)
-
--- High priority: overrides movement and idle
-anim:play(character, "attack", "Action", false)
-```
-
-## Default Priority
-
-If you pass an unrecognized `type` string (or omit it), EZAnim defaults to `Enum.AnimationPriority.Movement`:
-
-```lua
--- These both default to Movement priority
-anim:play(character, "run")             -- type omitted
-anim:play(character, "run", "unknown")  -- type not in PriorityMap
-```
-
-<Note>
-  Priority strings are **case-insensitive** — EZAnim calls `string.lower()` on the `type` argument before lookup. `"action"`, `"Action"`, and `"ACTION"` all resolve to `Enum.AnimationPriority.Action`.
-</Note>
-
-## Choosing the Right Priority
-
-- Use **Idle** for ambient loops that should yield to everything else.
-- Use **Movement** for locomotion animations (walk, run, swim).
-- Use **Action** for gameplay interactions (attacks, pickups, emotes).
-- Use **Action2–Action4** when you need to layer multiple high-priority animations simultaneously (e.g. a torso rotation on top of an attack).
+Higher priority overrides lower priority. `Action4` > `Action3` > `Action2` > `Action` > `Movement` > `Idle`.

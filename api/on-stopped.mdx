@@ -1,10 +1,10 @@
 ---
 title: "AnimationService:onStopped — React When Animation Ends"
 sidebarTitle: "onStopped"
-description: "AnimationService:onStopped(model, id, callback) connects a callback to the animation track's Stopped signal, firing once when the animation finishes."
+description: "AnimationService:onStopped(model, id, callback) connects a callback to the animation track's Stopped signal, firing on natural end or manual stop."
 ---
 
-`onStopped` connects a callback to the `Stopped` signal of an animation track. The callback fires once when the animation stops — either because it ended naturally, because `stop` was called, or because it was replaced by a new `play` call.
+`onStopped` connects a callback to the `Stopped` signal of an animation track. The callback fires when the animation stops — either because it reached its end naturally, or because `stop` was called explicitly.
 
 ## Signature
 

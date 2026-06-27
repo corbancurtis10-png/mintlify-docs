@@ -1,5 +1,5 @@
 ---
-title: "Animation Tracks and Caching in EZAnim"
+title: "Understanding EZAnim Animation Tracks and Track Caching"
 sidebarTitle: "Tracks"
 description: "Learn how EZAnim stores and caches animation tracks per model, and what that means for performance and playback behavior in your Roblox game."
 ---
@@ -60,4 +60,4 @@ if anim:isPlaying(character, "attack") then
 end
 ```
 
-`isPlaying` returns `true` if the stored track exists and its `IsPlaying` property is `true`.
+`isPlaying` returns `boolean?` — it returns `true` if the stored track exists and its `IsPlaying` property is `true`, `false` if the track exists but is not playing, and `nil` if no track has been stored for that key yet.

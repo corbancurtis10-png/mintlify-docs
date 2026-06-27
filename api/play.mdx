@@ -28,13 +28,15 @@ AnimationService:play(
 </ParamField>
 
 <ParamField path="type" type="string" required>
-  The animation priority. Case-insensitive. One of:
+  The intended animation priority. Accepts one of the following strings:
   - `"Idle"` — lowest priority
   - `"Movement"`
   - `"Action"`
   - `"Action2"`, `"Action3"`, `"Action4"` — highest priority
 
-  Unknown values default to `Movement`.
+  <Warning>
+    Due to an internal case-conversion bug, the `type` value is lowercased before being looked up in the priority map, which uses capitalized keys. As a result, no value currently matches the map and **all animations play at `Enum.AnimationPriority.Movement`** regardless of what you pass. This is a known limitation.
+  </Warning>
 </ParamField>
 
 <ParamField path="looped" type="boolean" default="false">

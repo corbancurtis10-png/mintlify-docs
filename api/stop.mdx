@@ -1,7 +1,7 @@
 ---
 title: "AnimationService:stop — Stop an Animation Track"
 sidebarTitle: "stop"
-description: "AnimationService:stop(model, id?) stops a specific animation by key, or stops all animations on a model when no key is provided."
+description: "AnimationService:stop(model, id?) halts a specific animation track by key, or stops every active animation on the model when no key is provided."
 ---
 
 `stop` halts animation playback on a model. Pass an animation key to stop just that track, or omit the key to stop every animation currently stored for the model.
@@ -37,5 +37,5 @@ anim:stop(character)
 ```
 
 <Note>
-  Calling `stop` does not remove the track from internal storage. You can call `play` on the same key again without any issues.
+  After stopping an animation you can call `play` on the same key again at any time without any issues.
 </Note>

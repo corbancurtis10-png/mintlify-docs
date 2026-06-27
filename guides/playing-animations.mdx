@@ -1,10 +1,10 @@
 ---
-title: "Playing and Controlling Animations with EZAnim"
+title: "Playing and Controlling Animations in Roblox with EZAnim"
 sidebarTitle: "Playing Animations"
-description: "Learn how to play, stop, pause, and resume character animations in Roblox using EZAnim's playback methods with priority and loop control."
+description: "Learn how to play, stop, pause, resume, and check character animations in Roblox using EZAnim's playback methods with priority and loop control."
 ---
 
-EZAnim gives you full playback control over character animations through four core methods: `play`, `stop`, `pause`, and `resume`. This guide covers each one with practical examples.
+EZAnim gives you full playback control over character animations through five core methods: `play`, `stop`, `pause`, `resume`, and `isPlaying`. This guide covers each one with practical examples.
 
 ## Playing an Animation
 
@@ -26,11 +26,13 @@ anim:play(character, "idle", "Idle", true)
 anim:play(character, "attack", "Action", false)
 ```
 
-`play` returns the `AnimationTrack` if you need direct access:
+`play` returns the `AnimationTrack` on success, or `nil` if the animation could not be loaded. Always guard against `nil` before accessing track properties:
 
 ```lua
 local track = anim:play(character, "run", "Movement", true)
-print(track.Speed) -- 1
+if track then
+    print(track.Speed) -- 1
+end
 ```
 
 ## Stopping Animations
@@ -71,7 +73,7 @@ anim:resume(character, "run")
 
 ## Checking If an Animation Is Playing
 
-Use `isPlaying` to guard logic behind an active animation:
+`isPlaying` returns `true` if the animation is currently playing, `false` if it is loaded but stopped, or `nil` if the track does not exist yet. Guard accordingly:
 
 ```lua
 if not anim:isPlaying(character, "attack") then

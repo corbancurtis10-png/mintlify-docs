@@ -1,5 +1,5 @@
 ---
-title: "Ragdoll Physics with EZAnim"
+title: "Physics-Based Ragdoll for Roblox Characters with EZAnim"
 sidebarTitle: "Ragdoll"
 description: "Add physics-based ragdoll to any Roblox character using EZAnim's ragdoll and unragdoll methods, with optional automatic recovery after a set duration."
 ---
@@ -55,15 +55,18 @@ end)
 
 ## NPC Ragdoll Example
 
+To ragdoll an NPC after a hit-reaction animation finishes, call `play` first so the track exists, then wire up `onStopped`:
+
 ```lua
 local function knockbackNPC(npcModel)
     -- Play a hit reaction first
     anim:play(npcModel, "hit", "Action", false)
 
     -- After the hit animation, ragdoll
-    anim:onStopped(npcModel, "hit", function()
+    local conn = anim:onStopped(npcModel, "hit", function()
         anim:ragdoll(npcModel, 4)
     end)
+    -- conn may be nil if the track failed to load
 end
 ```
 
